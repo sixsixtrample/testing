@@ -8,6 +8,8 @@ var path = require('path');
 var mime = require('mime');
 var cache = {};
 
+var chatServer = require('/lib/chat_server');
+
 function send404Response(response)
 {
     response.writeHead(404,{'Content-Type': 'text/plain'});
@@ -26,22 +28,17 @@ function serveStatic(response, cache, absPath)
     {
         sendFile(response, absPath, cache[absPath]);
     }else{
-        fs.exists(absPath, function(exists) {
-            if(exists)
+
+        fs.readFile(absPath, function(err, data) {
+            if(err)
             {
-                fs.readFile(absPath, function(err, data) {
-                    if(err)
-                    {
-                        send404(response);
-                    }else{
-                        cache[absPath] = data;
-                        sendFile(response, absPath, data);
-                    }
-                });
-            }else{
                 send404Response(response);
+            }else{
+                cache[absPath] = data;
+                sendFile(response, absPath, data);
             }
         });
+
     }
 }
 
@@ -58,3 +55,5 @@ var server = http.createServer(function(request, response) {
     var absPath = './' + filePath;
     serveStatic(response, cache, absPath);
 });
+
+chatServer.listen(server);
